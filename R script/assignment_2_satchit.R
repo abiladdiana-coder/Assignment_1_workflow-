@@ -6,6 +6,9 @@
 ##
 ##***************************
 
+setwd("./R script/")
+
+
 ## Packages used -------
 library(tidyverse)
 conflicted::conflicts_prefer(dplyr::filter())
@@ -17,6 +20,10 @@ theme_set(theme_light())
 
 trichinella_spiralis <- read.csv("../data/GCA_001447595.1.csv")
 trichinella_zimbabwensis <- read_csv("../data/GCA_001447665.1.csv")
+
+
+#Satchit MINOR EDIT - changed to read_csv to be more in line with tidyverse coding .csv still works but _csv needs the tidyverse library----
+trichinella_spiralis <- read_csv("../data/GCA_001447595.1.csv")
 
 ##WRANGLE -----
 ###make a vector containing strings of non TE names 
@@ -40,6 +47,23 @@ trichinella_spiralis_te <- trichinella_spiralis_te_cleaned |>
       str_detect(matching_class, "^DNA|^RC") ~ "DNA_transposon",
       str_detect(matching_class, "^(LINE|LTR|PLE|SINE)") ~ "Retrotransposon"))
 
+#Satchit EDIT 1 - tweaked the code to filter for only TE and their lengths. I thought it could shorten the code since you don't need to %not% using a list to find the TE and then use mutate to make your columns ----
+Edit_1 <- trichinella_spiralis |> 
+  filter(str_detect(matching_class, "^(DNA|RC|LINE|LTR|PLE|SINE)")) |> 
+  mutate(
+    te_length = qry_width,
+    te_category = if_else(str_detect(matching_class, "^(DNA|RC)"),
+                          "DNA_transposon", "Retrotransposon"))
+
+trichinella_spiralis_te <- trichinella_spiralis_te_cleaned |> 
+  mutate(
+    te_length = qry_width,
+    te_category = case_when(
+      str_detect(matching_class, "^DNA|^RC") ~ "DNA_transposon",
+      str_detect(matching_class, "^(LINE|LTR|PLE|SINE)") ~ "Retrotransposon"))
+
+
+
 trichinella_zimbabwensis_te <- trichinella_zimbabwensis_te_cleaned |> 
   mutate(
     te_length = qry_width,
@@ -52,6 +76,7 @@ spiralis_proportions <- trichinella_spiralis_te |>
   count(te_category) |>
   mutate(proportion = n / sum(n),
          species = "T. spiralis")
+
 
 zimb_proportions <- trichinella_zimbabwensis_te |>
   count(te_category) |>
@@ -68,6 +93,17 @@ te_fragment_df <- bind_rows(
     species = factor(species, levels = c("T. spiralis", "T. zimbabwensis")),
     te_category = factor(te_category,
                          levels = c("DNA_transposon", "Retrotransposon")))
+
+#Satchit EDIT 2 - changed the bind_rows to not need any mutate, .id helps it make a source column. I also relocated the te_length and te_category to be the first few columns you look at. You can look at the dplyr cheatsheet, it gives a good example explaining it. ----
+Edit_2 <- bind_rows(
+  "T. spiralis" = trichinella_spiralis_te,
+  "T. zimbabwensis" = trichinella_zimbabwensis_te,
+   .id = "species") |> relocate(te_category, te_length, .before = sw_score) |> 
+  mutate(
+    species = factor(species, levels = c("T. spiralis", "T. zimbabwensis")),
+    te_category = factor(te_category,
+                         levels = c("DNA_transposon", "Retrotransposon")))
+ 
 
 #STATISTICAL ANALYSIS-----
 ###chi square test for independence of TE category and species 
