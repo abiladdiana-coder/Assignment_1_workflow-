@@ -12,7 +12,7 @@ conflicted::conflicts_prefer(dplyr::filter())
 library(viridis)
 # + scale_color/fill_viridis_c/d()
 theme_set(theme_light())
-ggg
+
 ##Load the data -----
 
 trichinella_spiralis <- read.csv("../data/GCA_001447595.1.csv")
