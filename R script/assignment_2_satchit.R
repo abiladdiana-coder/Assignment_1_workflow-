@@ -54,6 +54,7 @@ Edit_1 <- trichinella_spiralis |>
     te_length = qry_width,
     te_category = if_else(str_detect(matching_class, "^(DNA|RC)"),
                           "DNA_transposon", "Retrotransposon"))
+#EDIT 1 END ----
 
 trichinella_spiralis_te <- trichinella_spiralis_te_cleaned |> 
   mutate(
@@ -103,7 +104,63 @@ Edit_2 <- bind_rows(
     species = factor(species, levels = c("T. spiralis", "T. zimbabwensis")),
     te_category = factor(te_category,
                          levels = c("DNA_transposon", "Retrotransposon")))
- 
+#EDIT 2 END ----
+
+#Satchit EDIT 3 - I used the first two edits I made and added the tric species my group was working with and combined it using your data and code to see if there are also similar te lengths in between the groups. I used the code for the exploratory figure to see what you guys were initially comparing.----
+
+Edit_3_tric_8 <- read_csv("../Data/GCA_001447745.1.csv")
+
+Edit_3_te <- Edit_3_tric_8 |> 
+  filter(str_detect(matching_class, "^(DNA|RC|LINE|LTR|PLE|SINE)")) |> 
+  mutate(
+    te_length = qry_width,
+    te_category = if_else(str_detect(matching_class, "^(DNA|RC)"),
+                          "DNA_transposon", "Retrotransposon"))
+
+Edit_3_bind_rows <- bind_rows(
+  "T. spiralis" = trichinella_spiralis_te,
+  "T. zimbabwensis" = trichinella_zimbabwensis_te,
+  "T.8" = Edit_3_te,
+  .id = "species") |> relocate(te_category, te_length, .before = sw_score) |> 
+  mutate(
+    species = factor(species, levels = c("T. spiralis", "T. zimbabwensis", "T.8")),
+    te_category = factor(te_category,
+                         levels = c("DNA_transposon", "Retrotransposon")))
+
+
+figure_Edit <- ggplot() +
+  geom_freqpoly(
+    data = trichinella_zimbabwensis_te,
+    aes(x = te_length, colour = "T.zimbabwensis"), 
+    alpha = 0.6,
+    bins = 200,
+    linewidth = 1.0
+  ) +
+  geom_freqpoly(
+    data = trichinella_spiralis_te, 
+    aes(x = te_length, colour = "T.spiralis"),
+    alpha = 0.6,
+    bins = 200,
+    linewidth = 1.0 
+  ) +
+  geom_freqpoly(
+    data = Edit_3_te,
+    aes(x = te_length, colour = "T.8"),
+    alpha = 0.6,
+    bins = 200,
+    linewidth = 1.0
+  )
+  labs(
+    x = "TE Length (bp)",
+    y = "TE Count",
+    colour = ""
+  ) +
+  coord_cartesian(xlim= c(0,300)
+  ) +
+  theme(legend.position = "bottom")
+
+figure_Edit
+#EDIT 3 END ----
 
 #STATISTICAL ANALYSIS-----
 ###chi square test for independence of TE category and species 
